@@ -1,0 +1,71 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: |
+        if [ -f package.json ]; then
+          npm install
+        fi
+        
+    - name: Inject EmailJS Configuration
+      run: |
+        # Create the configuration injection script
+        cat > inject-config.js << 'EOF'
+        const fs = require('fs');
+        const path = require('path');
+        
+        // Create configuration object from environment variables
+        const config = {
+          EMAILJS_SERVICE_ID: process.env.EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID: process.env.EMAILJS_TEMPLATE_ID,
+          EMAILJS_PUBLIC_KEY: process.env.EMAILJS_PUBLIC_KEY
+        };
+        
+        // Inject into HTML before other scripts
+        const indexPath = path.join(__dirname, 'index.html');
+        let html = fs.readFileSync(indexPath, 'utf8');
+        
+        const configScript = `
+        <script>
+          window.EMAIL_CONFIG = ${JSON.stringify(config)};
+        </script>`;
+        
+        // Insert before the first script tag
+        html = html.replace(
+          '<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>',
+          configScript + '\n    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>'
+        );
+        
+        fs.writeFileSync(indexPath, html);
+        console.log('EmailJS configuration injected successfully');
+        EOF
+        
+        node inject-config.js
+      env:
+        EMAILJS_SERVICE_ID: ${{ secrets.EMAILJS_SERVICE_ID }}
+        EMAILJS_TEMPLATE_ID: ${{ secrets.EMAILJS_TEMPLATE_ID }}
+        EMAILJS_PUBLIC_KEY: ${{ secrets.EMAILJS_PUBLIC_KEY }}
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
