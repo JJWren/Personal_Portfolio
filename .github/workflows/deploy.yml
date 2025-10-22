@@ -63,16 +63,13 @@ jobs:
         # Inject EmailJS configuration directly into email-config.js
         echo "Injecting EmailJS configuration into email-config.js..."
         
-        # Create the configuration injection
-        CONFIG_INJECTION="// EmailJS configuration - injected by GitHub Actions
-window.EMAIL_CONFIG = {
-    EMAILJS_SERVICE_ID: '$EMAILJS_SERVICE_ID',
-    EMAILJS_TEMPLATE_ID: '$EMAILJS_TEMPLATE_ID',
-    EMAILJS_PUBLIC_KEY: '$EMAILJS_PUBLIC_KEY'
-};"
-        
-        # Insert at the top of email-config.js
-        echo "$CONFIG_INJECTION" > temp_config.js
+        # Create the configuration injection using echo commands
+        echo "// EmailJS configuration - injected by GitHub Actions" > temp_config.js
+        echo "window.EMAIL_CONFIG = {" >> temp_config.js
+        echo "    EMAILJS_SERVICE_ID: '$EMAILJS_SERVICE_ID'," >> temp_config.js
+        echo "    EMAILJS_TEMPLATE_ID: '$EMAILJS_TEMPLATE_ID'," >> temp_config.js
+        echo "    EMAILJS_PUBLIC_KEY: '$EMAILJS_PUBLIC_KEY'" >> temp_config.js
+        echo "};" >> temp_config.js
         echo "" >> temp_config.js
         cat config/email-config.js >> temp_config.js
         mv temp_config.js config/email-config.js
