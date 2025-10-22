@@ -91,15 +91,24 @@ jobs:
     
     - name: List files to be deployed
       run: |
-        echo "=== Files that will be deployed ==="
-        find . -type f -not -path "./.git/*" | head -20
-        echo "=== Checking specific files ==="
-        ls -la favicon.ico || echo "favicon.ico not found"
-        ls -la images/ || echo "images directory not found"
+        echo "=== All files in repository ==="
+        find . -type f -not -path "./.git/*" | sort
+        echo "=== Config files specifically ==="
+        find . -name "*.js" -path "./config/*"
         echo "=== Checking config directory ==="
         ls -la config/ || echo "config directory not found"
         echo "=== Contents of email-secrets.js ==="
         cat config/email-secrets.js || echo "email-secrets.js not found"
+        echo "=== Working directory ==="
+        pwd
+        ls -la
+    
+    - name: Verify files before deployment
+      run: |
+        echo "=== Final verification before deployment ==="
+        echo "Config directory exists:" && ls -la config/
+        echo "Email secrets file:" && cat config/email-secrets.js
+        echo "All files to deploy:" && find . -type f -not -path "./.git/*" | grep -E "\.(html|css|js|png|jpg|svg|pdf|ico)$" | sort
     
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
