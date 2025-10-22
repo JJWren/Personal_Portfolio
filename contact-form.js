@@ -5,10 +5,23 @@ class ContactFormHandler {
         this.submitBtn = document.getElementById('submit-btn');
         this.messageDiv = document.getElementById('form-message');
         this.mathAnswer = 0;
+        // Add immediate debugging
+        console.log('=== ContactForm Constructor Debug ===');
+        console.log('window.EMAIL_CONFIG at constructor time:', window.EMAIL_CONFIG);
+        console.log('typeof window.EMAIL_CONFIG:', typeof window.EMAIL_CONFIG);
+        
         this.emailConfig = new EmailConfig();
         this.lastSubmission = 0;
         this.submissionCount = 0;
         this.maxSubmissionsPerHour = 5;
+        
+        // Debug the emailConfig after construction
+        console.log('EmailConfig after construction:', {
+            serviceId: this.emailConfig.serviceId,
+            templateId: this.emailConfig.templateId,
+            publicKey: this.emailConfig.publicKey,
+            isConfigured: this.emailConfig.isConfigured()
+        });
         
         if (this.form && !this.form.hasAttribute('data-handler-initialized')) {
             this.init();
@@ -270,14 +283,17 @@ class ContactFormHandler {
     async sendWithEmailJS(formData) {
         // Debug: Check what's available
         console.log('DEBUG: window.EMAIL_CONFIG =', window.EMAIL_CONFIG);
-        console.log('DEBUG: emailConfig object =', this.emailConfig);
+        console.log('DEBUG: emailConfig object before refresh =', this.emailConfig);
+        
+        // Force refresh configuration before sending
+        this.emailConfig.refreshConfiguration();
         
         // Use configuration values
         const SERVICE_ID = this.emailConfig.serviceId;
         const TEMPLATE_ID = this.emailConfig.templateId;
         const PUBLIC_KEY = this.emailConfig.publicKey;
 
-        console.log('DEBUG: Extracted values:', {
+        console.log('DEBUG: Extracted values after refresh:', {
             SERVICE_ID: SERVICE_ID || 'MISSING',
             TEMPLATE_ID: TEMPLATE_ID || 'MISSING',
             PUBLIC_KEY: PUBLIC_KEY || 'MISSING'
