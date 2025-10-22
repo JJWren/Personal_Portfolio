@@ -70,7 +70,7 @@ jobs:
         grep -n "@emailjs/browser" index.html
         
         # Use sed to inject config before the EmailJS script
-        sed -i "/script src=\"https:\/\/cdn\.jsdelivr\.net\/npm\/@emailjs\/browser@4\/dist\/email\.min\.js\"/i\\$CONFIG_BLOCK" index.html
+        sed -i "/@emailjs\/browser/i\\$CONFIG_BLOCK" index.html
         
         # Verify injection
         if grep -q "window.EMAIL_CONFIG" index.html; then
