@@ -67,18 +67,49 @@ jobs:
         
         # Debug: Show the target line we're looking for
         echo "Target line to replace:"
-        grep -n "@emailjs/browser" index.html
+        grep -n "@emailjs/browser" index.html || {
+          echo "❌ EmailJS script line not found!"
+          exit 1
+        }
         
         # Create a temporary file with the injection
         # Find the line number of the EmailJS script
         LINE_NUM=$(grep -n "@emailjs/browser" index.html | cut -d: -f1)
         echo "Found EmailJS script at line: $LINE_NUM"
         
+        if [ -z "$LINE_NUM" ]; then
+          echo "❌ Could not determine line number!"
+          exit 1
+        fi
+        
         # Insert the config before that line
-        head -n $((LINE_NUM - 1)) index.html > temp_index.html
-        echo "$CONFIG_BLOCK" >> temp_index.html
-        tail -n +$LINE_NUM index.html >> temp_index.html
-        mv temp_index.html index.html
+        echo "Creating temporary file with injection..."
+        head -n $((LINE_NUM - 1)) index.html > temp_index.html || {
+          echo "❌ Failed to create first part of file"
+          exit 1
+        }
+        
+        echo "$CONFIG_BLOCK" >> temp_index.html || {
+          echo "❌ Failed to add config block"
+          exit 1
+        }
+        
+        tail -n +$LINE_NUM index.html >> temp_index.html || {
+          echo "❌ Failed to add remaining content"
+          exit 1
+        }
+        
+        # Verify temp file exists and has content
+        if [ ! -s temp_index.html ]; then
+          echo "❌ Temporary file is empty or missing"
+          exit 1
+        fi
+        
+        # Replace original file
+        mv temp_index.html index.html || {
+          echo "❌ Failed to replace original file"
+          exit 1
+        }
         
         # Verify injection
         if grep -q "window.EMAIL_CONFIG" index.html; then
