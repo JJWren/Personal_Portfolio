@@ -24,7 +24,11 @@ class EmailConfig {
     getConfigValue(key) {
         // Try to get from injected environment variables (set by build process)
         if (window.EMAIL_CONFIG && window.EMAIL_CONFIG[key]) {
-            return window.EMAIL_CONFIG[key];
+            // Check if it's not a placeholder value
+            const value = window.EMAIL_CONFIG[key];
+            if (value && !value.includes('YOUR_') && !value.includes('_HERE')) {
+                return value;
+            }
         }
         
         // For development, try to load from .env file via a dev server
