@@ -57,11 +57,27 @@ jobs:
         
         echo "Creating configuration injection..."
         
-        # Create the config script (properly escaped for JSON)
-        CONFIG_JSON="{\"EMAILJS_SERVICE_ID\":\"$EMAILJS_SERVICE_ID\",\"EMAILJS_TEMPLATE_ID\":\"$EMAILJS_TEMPLATE_ID\",\"EMAILJS_PUBLIC_KEY\":\"$EMAILJS_PUBLIC_KEY\"}"
+        # Create the configuration injection using a more reliable method
+        echo "Creating configuration injection..."
         
-        # Create config script block
-        CONFIG_BLOCK="    <script>window.EMAIL_CONFIG = $CONFIG_JSON;</script>"
+        # Write the config to a temporary file to avoid shell escaping issues
+        cat > config_injection.txt << 'EOF'
+    <script>
+      window.EMAIL_CONFIG = {
+        EMAILJS_SERVICE_ID: 'SERVICE_ID_PLACEHOLDER',
+        EMAILJS_TEMPLATE_ID: 'TEMPLATE_ID_PLACEHOLDER', 
+        EMAILJS_PUBLIC_KEY: 'PUBLIC_KEY_PLACEHOLDER'
+      };
+    </script>
+EOF
+        
+        # Replace placeholders with actual values
+        sed -i "s/SERVICE_ID_PLACEHOLDER/$EMAILJS_SERVICE_ID/g" config_injection.txt
+        sed -i "s/TEMPLATE_ID_PLACEHOLDER/$EMAILJS_TEMPLATE_ID/g" config_injection.txt
+        sed -i "s/PUBLIC_KEY_PLACEHOLDER/$EMAILJS_PUBLIC_KEY/g" config_injection.txt
+        
+        echo "Generated configuration:"
+        cat config_injection.txt
         
         echo "Injecting configuration into index.html..."
         
@@ -82,14 +98,15 @@ jobs:
           exit 1
         fi
         
-        # Insert the config before that line
+        # Insert the config before the EmailJS script line
         echo "Creating temporary file with injection..."
         head -n $((LINE_NUM - 1)) index.html > temp_index.html || {
           echo "❌ Failed to create first part of file"
           exit 1
         }
         
-        echo "$CONFIG_BLOCK" >> temp_index.html || {
+        # Add the configuration from the file
+        cat config_injection.txt >> temp_index.html || {
           echo "❌ Failed to add config block"
           exit 1
         }
@@ -110,6 +127,9 @@ jobs:
           echo "❌ Failed to replace original file"
           exit 1
         }
+        
+        # Clean up
+        rm -f config_injection.txt
         
         # Verify injection
         if grep -q "window.EMAIL_CONFIG" index.html; then
