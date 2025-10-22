@@ -20,13 +20,47 @@ class ContactFormHandler {
         this.generateMathCaptcha();
         this.form.addEventListener('submit', this.handleSubmit.bind(this));
         
-        // Initialize EmailJS with configuration
-        if (this.emailConfig.isConfigured()) {
-            emailjs.init(this.emailConfig.publicKey);
-            console.log('EmailJS initialized successfully');
-        } else {
-            console.warn('EmailJS configuration not available. Email functionality disabled.');
+        // Initialize EmailJS with configuration (with retry logic)
+        this.initializeEmailJS();
+    }
+    
+    initializeEmailJS() {
+        const tryInit = () => {
+            if (this.emailConfig.isConfigured()) {
+                emailjs.init(this.emailConfig.publicKey);
+                console.log('EmailJS initialized successfully');
+                return true;
+            }
+            return false;
+        };
+        
+        // Try immediate initialization
+        if (tryInit()) {
+            return;
         }
+        
+        // If not available immediately, retry with exponential backoff
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        const retryInit = () => {
+            attempts++;
+            if (tryInit()) {
+                console.log(`EmailJS initialized successfully on attempt ${attempts}`);
+                return;
+            }
+            
+            if (attempts < maxAttempts) {
+                const delay = Math.min(100 * Math.pow(2, attempts), 2000); // Exponential backoff, max 2s
+                console.log(`EmailJS not ready, retrying in ${delay}ms (attempt ${attempts})`);
+                setTimeout(retryInit, delay);
+            } else {
+                console.warn('EmailJS configuration not available after', maxAttempts, 'attempts. Email functionality disabled.');
+            }
+        };
+        
+        // Start retry process
+        setTimeout(retryInit, 100);
     }
 
     generateMathCaptcha() {
