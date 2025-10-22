@@ -234,16 +234,26 @@ class ContactFormHandler {
     }
 
     async sendWithEmailJS(formData) {
+        // Debug: Check what's available
+        console.log('DEBUG: window.EMAIL_CONFIG =', window.EMAIL_CONFIG);
+        console.log('DEBUG: emailConfig object =', this.emailConfig);
+        
         // Use configuration values
         const SERVICE_ID = this.emailConfig.serviceId;
         const TEMPLATE_ID = this.emailConfig.templateId;
         const PUBLIC_KEY = this.emailConfig.publicKey;
 
+        console.log('DEBUG: Extracted values:', {
+            SERVICE_ID: SERVICE_ID || 'MISSING',
+            TEMPLATE_ID: TEMPLATE_ID || 'MISSING',
+            PUBLIC_KEY: PUBLIC_KEY || 'MISSING'
+        });
+
         if (!this.emailConfig.isConfigured()) {
             console.error('EmailJS Configuration Check Failed:', {
-                serviceId: SERVICE_ID ? 'SET' : 'MISSING',
-                templateId: TEMPLATE_ID ? 'SET' : 'MISSING', 
-                publicKey: PUBLIC_KEY ? 'SET' : 'MISSING'
+                serviceId: SERVICE_ID || 'MISSING',
+                templateId: TEMPLATE_ID || 'MISSING', 
+                publicKey: PUBLIC_KEY || 'MISSING'
             });
             throw new Error('EmailJS is not properly configured');
         }
