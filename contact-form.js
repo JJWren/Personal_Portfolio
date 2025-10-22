@@ -240,8 +240,15 @@ class ContactFormHandler {
         const PUBLIC_KEY = this.emailConfig.publicKey;
 
         if (!this.emailConfig.isConfigured()) {
+            console.error('EmailJS Configuration Check Failed:', {
+                serviceId: SERVICE_ID ? 'SET' : 'MISSING',
+                templateId: TEMPLATE_ID ? 'SET' : 'MISSING', 
+                publicKey: PUBLIC_KEY ? 'SET' : 'MISSING'
+            });
             throw new Error('EmailJS is not properly configured');
         }
+        
+        console.log('EmailJS Configuration OK - attempting to send email');
 
         const templateParams = {
             from_name: this.sanitizeInput(formData.get('name')),

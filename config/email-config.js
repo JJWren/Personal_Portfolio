@@ -8,9 +8,17 @@ class EmailConfig {
         // For production (GitHub Pages, etc), these should be set via GitHub Secrets
         // and injected during the build process
         
+        console.log('EmailConfig: Checking for EMAIL_CONFIG...', window.EMAIL_CONFIG);
+        
         this.serviceId = this.getConfigValue('EMAILJS_SERVICE_ID');
         this.templateId = this.getConfigValue('EMAILJS_TEMPLATE_ID');
         this.publicKey = this.getConfigValue('EMAILJS_PUBLIC_KEY');
+        
+        console.log('EmailConfig: Configuration loaded', {
+            serviceId: this.serviceId ? 'SET' : 'MISSING',
+            templateId: this.templateId ? 'SET' : 'MISSING',
+            publicKey: this.publicKey ? 'SET' : 'MISSING'
+        });
     }
 
     getConfigValue(key) {
