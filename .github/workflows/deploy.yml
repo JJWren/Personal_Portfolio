@@ -81,8 +81,7 @@ jobs:
           head -5 config/email-secrets.js
         else
           echo "❌ Failed to inject configuration"
-          echo "Current EmailJS script line:"
-          grep -n "emailjs/browser" index.html
+          ls -la config/
           exit 1
         fi
       env:
@@ -97,6 +96,10 @@ jobs:
         echo "=== Checking specific files ==="
         ls -la favicon.ico || echo "favicon.ico not found"
         ls -la images/ || echo "images directory not found"
+        echo "=== Checking config directory ==="
+        ls -la config/ || echo "config directory not found"
+        echo "=== Contents of email-secrets.js ==="
+        cat config/email-secrets.js || echo "email-secrets.js not found"
     
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
