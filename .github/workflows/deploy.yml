@@ -57,24 +57,17 @@ jobs:
         
         echo "Creating configuration injection..."
         
-        # Create the configuration injection using a more reliable method
+        # Create the configuration injection using echo commands
         echo "Creating configuration injection..."
         
-        # Write the config to a temporary file to avoid shell escaping issues
-        cat > config_injection.txt << 'EOF'
-    <script>
-      window.EMAIL_CONFIG = {
-        EMAILJS_SERVICE_ID: 'SERVICE_ID_PLACEHOLDER',
-        EMAILJS_TEMPLATE_ID: 'TEMPLATE_ID_PLACEHOLDER', 
-        EMAILJS_PUBLIC_KEY: 'PUBLIC_KEY_PLACEHOLDER'
-      };
-    </script>
-EOF
-        
-        # Replace placeholders with actual values
-        sed -i "s/SERVICE_ID_PLACEHOLDER/$EMAILJS_SERVICE_ID/g" config_injection.txt
-        sed -i "s/TEMPLATE_ID_PLACEHOLDER/$EMAILJS_TEMPLATE_ID/g" config_injection.txt
-        sed -i "s/PUBLIC_KEY_PLACEHOLDER/$EMAILJS_PUBLIC_KEY/g" config_injection.txt
+        # Create the config script block with proper escaping
+        echo "    <script>" > config_injection.txt
+        echo "      window.EMAIL_CONFIG = {" >> config_injection.txt
+        echo "        EMAILJS_SERVICE_ID: '$EMAILJS_SERVICE_ID'," >> config_injection.txt
+        echo "        EMAILJS_TEMPLATE_ID: '$EMAILJS_TEMPLATE_ID'," >> config_injection.txt
+        echo "        EMAILJS_PUBLIC_KEY: '$EMAILJS_PUBLIC_KEY'" >> config_injection.txt
+        echo "      };" >> config_injection.txt
+        echo "    </script>" >> config_injection.txt
         
         echo "Generated configuration:"
         cat config_injection.txt
