@@ -31,67 +31,51 @@ jobs:
         
     - name: Inject EmailJS Configuration
       run: |
-        echo "Injecting EmailJS configuration..."
-        echo "Service ID length: ${#EMAILJS_SERVICE_ID}"
-        echo "Template ID length: ${#EMAILJS_TEMPLATE_ID}" 
-        echo "Public Key length: ${#EMAILJS_PUBLIC_KEY}"
+        echo "=== EmailJS Configuration Injection ==="
+        echo "Checking secrets availability..."
         
-        # Check if secrets are available
-        if [ -z "$EMAILJS_SERVICE_ID" ] || [ -z "$EMAILJS_TEMPLATE_ID" ] || [ -z "$EMAILJS_PUBLIC_KEY" ]; then
-          echo "ERROR: One or more EmailJS secrets are missing!"
+        if [ -z "$EMAILJS_SERVICE_ID" ]; then
+          echo "❌ EMAILJS_SERVICE_ID is missing"
           exit 1
+        else
+          echo "✅ EMAILJS_SERVICE_ID is available (length: ${#EMAILJS_SERVICE_ID})"
         fi
         
-        # Create a temporary config injection file
-        cat > temp_inject.py << 'EOF'
-import re
-import sys
-import os
-
-# Read the HTML file
-with open('index.html', 'r', encoding='utf-8') as f:
-    html_content = f.read()
-
-# Get environment variables
-service_id = os.environ.get('EMAILJS_SERVICE_ID', '')
-template_id = os.environ.get('EMAILJS_TEMPLATE_ID', '')
-public_key = os.environ.get('EMAILJS_PUBLIC_KEY', '')
-
-# Create config script
-config_script = f'''<script>
-window.EMAIL_CONFIG = {{
-  "EMAILJS_SERVICE_ID": "{service_id}",
-  "EMAILJS_TEMPLATE_ID": "{template_id}",
-  "EMAILJS_PUBLIC_KEY": "{public_key}"
-}};
-</script>'''
-
-# Find and replace the EmailJS script tag
-pattern = r'<script src="https://cdn\.jsdelivr\.net/npm/@emailjs/browser@4/dist/email\.min\.js"></script>'
-replacement = config_script + '\n    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>'
-
-new_html = re.sub(pattern, replacement, html_content)
-
-# Write back to file
-with open('index.html', 'w', encoding='utf-8') as f:
-    f.write(new_html)
-
-# Verify injection
-if 'EMAIL_CONFIG' in new_html:
-    print("✓ EmailJS configuration injected successfully")
-else:
-    print("✗ Failed to inject EmailJS configuration")
-    sys.exit(1)
-EOF
-        
-        python3 temp_inject.py
-        rm temp_inject.py
-        
-        # Verify the injection worked
-        if grep -q "EMAIL_CONFIG" index.html; then
-          echo "✓ Configuration injection verified"
+        if [ -z "$EMAILJS_TEMPLATE_ID" ]; then
+          echo "❌ EMAILJS_TEMPLATE_ID is missing"
+          exit 1
         else
-          echo "✗ Configuration injection failed"
+          echo "✅ EMAILJS_TEMPLATE_ID is available (length: ${#EMAILJS_TEMPLATE_ID})"
+        fi
+        
+        if [ -z "$EMAILJS_PUBLIC_KEY" ]; then
+          echo "❌ EMAILJS_PUBLIC_KEY is missing"
+          exit 1
+        else
+          echo "✅ EMAILJS_PUBLIC_KEY is available (length: ${#EMAILJS_PUBLIC_KEY})"
+        fi
+        
+        echo "Creating configuration injection..."
+        
+        # Create the config script (properly escaped for JSON)
+        CONFIG_JSON="{\"EMAILJS_SERVICE_ID\":\"$EMAILJS_SERVICE_ID\",\"EMAILJS_TEMPLATE_ID\":\"$EMAILJS_TEMPLATE_ID\",\"EMAILJS_PUBLIC_KEY\":\"$EMAILJS_PUBLIC_KEY\"}"
+        
+        # Create config script block
+        CONFIG_BLOCK="    <script>window.EMAIL_CONFIG = $CONFIG_JSON;</script>"
+        
+        echo "Injecting configuration into index.html..."
+        
+        # Use perl for more reliable regex replacement
+        perl -i -pe "s|(\s*)<script src=\"https://cdn\.jsdelivr\.net/npm/\@emailjs/browser\@4/dist/email\.min\.js\"></script>|$CONFIG_BLOCK\n\$1<script src=\"https://cdn.jsdelivr.net/npm/\@emailjs/browser\@4/dist/email.min.js\"></script>|g" index.html
+        
+        # Verify injection
+        if grep -q "window.EMAIL_CONFIG" index.html; then
+          echo "✅ EmailJS configuration injected successfully!"
+          grep -n "EMAIL_CONFIG" index.html
+        else
+          echo "❌ Failed to inject configuration"
+          echo "Current EmailJS script line:"
+          grep -n "emailjs/browser" index.html
           exit 1
         fi
       env:
