@@ -31,38 +31,20 @@ jobs:
         
     - name: Inject EmailJS Configuration
       run: |
-        # Create the configuration injection script
-        cat > inject-config.js << 'EOF'
-        const fs = require('fs');
-        const path = require('path');
+        # Create configuration script injection using sed
+        echo "Injecting EmailJS configuration..."
+        echo "Service ID: ${EMAILJS_SERVICE_ID:0:10}..."
+        echo "Template ID: ${EMAILJS_TEMPLATE_ID:0:10}..."
+        echo "Public Key: ${EMAILJS_PUBLIC_KEY:0:10}..."
         
-        // Create configuration object from environment variables
-        const config = {
-          EMAILJS_SERVICE_ID: process.env.EMAILJS_SERVICE_ID,
-          EMAILJS_TEMPLATE_ID: process.env.EMAILJS_TEMPLATE_ID,
-          EMAILJS_PUBLIC_KEY: process.env.EMAILJS_PUBLIC_KEY
-        };
+        # Create config script
+        CONFIG_SCRIPT="<script>window.EMAIL_CONFIG = {\"EMAILJS_SERVICE_ID\":\"$EMAILJS_SERVICE_ID\",\"EMAILJS_TEMPLATE_ID\":\"$EMAILJS_TEMPLATE_ID\",\"EMAILJS_PUBLIC_KEY\":\"$EMAILJS_PUBLIC_KEY\"};</script>"
         
-        // Inject into HTML before other scripts
-        const indexPath = path.join(__dirname, 'index.html');
-        let html = fs.readFileSync(indexPath, 'utf8');
+        # Insert config before EmailJS script using sed
+        sed -i "s|<script src=\"https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js\"></script>|$CONFIG_SCRIPT\n    <script src=\"https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js\"></script>|" index.html
         
-        const configScript = `
-        <script>
-          window.EMAIL_CONFIG = ${JSON.stringify(config)};
-        </script>`;
-        
-        // Insert before the first script tag
-        html = html.replace(
-          '<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>',
-          configScript + '\n    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>'
-        );
-        
-        fs.writeFileSync(indexPath, html);
-        console.log('EmailJS configuration injected successfully');
-        EOF
-        
-        node inject-config.js
+        echo "Configuration injected successfully"
+        grep -n "EMAIL_CONFIG" index.html || echo "Warning: EMAIL_CONFIG not found in HTML"
       env:
         EMAILJS_SERVICE_ID: ${{ secrets.EMAILJS_SERVICE_ID }}
         EMAILJS_TEMPLATE_ID: ${{ secrets.EMAILJS_TEMPLATE_ID }}
