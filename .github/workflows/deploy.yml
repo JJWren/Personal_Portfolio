@@ -83,9 +83,19 @@ jobs:
         EMAILJS_TEMPLATE_ID: ${{ secrets.EMAILJS_TEMPLATE_ID }}
         EMAILJS_PUBLIC_KEY: ${{ secrets.EMAILJS_PUBLIC_KEY }}
     
+    - name: List files to be deployed
+      run: |
+        echo "=== Files that will be deployed ==="
+        find . -type f -not -path "./.git/*" | head -20
+        echo "=== Checking specific files ==="
+        ls -la favicon.ico || echo "favicon.ico not found"
+        ls -la images/ || echo "images directory not found"
+    
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./
+        keep_files: false
+        force_orphan: true
