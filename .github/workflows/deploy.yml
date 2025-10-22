@@ -69,8 +69,16 @@ jobs:
         echo "Target line to replace:"
         grep -n "@emailjs/browser" index.html
         
-        # Use sed to inject config before the EmailJS script
-        sed -i "/@emailjs\/browser/i\\$CONFIG_BLOCK" index.html
+        # Create a temporary file with the injection
+        # Find the line number of the EmailJS script
+        LINE_NUM=$(grep -n "@emailjs/browser" index.html | cut -d: -f1)
+        echo "Found EmailJS script at line: $LINE_NUM"
+        
+        # Insert the config before that line
+        head -n $((LINE_NUM - 1)) index.html > temp_index.html
+        echo "$CONFIG_BLOCK" >> temp_index.html
+        tail -n +$LINE_NUM index.html >> temp_index.html
+        mv temp_index.html index.html
         
         # Verify injection
         if grep -q "window.EMAIL_CONFIG" index.html; then
