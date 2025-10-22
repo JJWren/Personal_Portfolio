@@ -25,8 +25,8 @@ def load_env():
 
 class DevHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
-        # If requesting the email-secrets.js file, serve dynamically generated config
-        if self.path == '/config/email-secrets.js':
+        # If requesting the email-config.generated.js file, serve dynamically generated config
+        if self.path == '/config/email-config.generated.js':
             self.send_response(200)
             self.send_header('Content-type', 'application/javascript')
             # Add cache-busting headers for development
