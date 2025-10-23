@@ -1,5 +1,12 @@
 // EmailJS configuration - injected by GitHub Actions
 window.EMAIL_CONFIG = {
+  EMAILJS_SERVICE_ID:  "service_hzt69ni",
+  EMAILJS_TEMPLATE_ID: "template_qfb70hf",
+  EMAILJS_PUBLIC_KEY:  "Fe9gY3ItziOzjcIYQ"
+};
+
+// EmailJS configuration - injected by GitHub Actions
+window.EMAIL_CONFIG = {
     EMAILJS_SERVICE_ID: "${{ secrets.EMAILJS_SERVICE_ID }}",
     EMAILJS_TEMPLATE_ID: "${{ secrets.EMAILJS_TEMPLATE_ID }}",
     EMAILJS_PUBLIC_KEY: "${{ secrets.EMAILJS_PUBLIC_KEY }}"
