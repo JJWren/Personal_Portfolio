@@ -30,7 +30,7 @@ class ContactFormHandler {
     initializeEmailJS() {
         const tryInit = () => {
             if (this.emailConfig.isConfigured()) {
-                emailjs.init(this.emailConfig.publicKey);
+                emailjs.init({ publicKey: this.emailConfig.publicKey });
                 console.log('EmailJS initialized successfully');
                 return true;
             }
