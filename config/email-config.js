@@ -1,3 +1,10 @@
+// EmailJS configuration - injected by GitHub Actions
+window.EMAIL_CONFIG = {
+    EMAILJS_SERVICE_ID: 'service_hzt69ni',
+    EMAILJS_TEMPLATE_ID: 'template_qfb70hf',
+    EMAILJS_PUBLIC_KEY: 'Fe9gY3ItziOzjcIYQ'
+};
+
 // Email configuration
 // For GitHub Pages deployment, these values need to be set during build time
 // or loaded from a secure configuration service
