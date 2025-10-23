@@ -72,7 +72,17 @@ jobs:
         echo "};" >> temp_config.js
         echo "" >> temp_config.js
         cat config/email-config.js >> temp_config.js
+        
+        # Create backup and replace
+        cp config/email-config.js config/email-config.js.backup
         mv temp_config.js config/email-config.js
+        
+        # Verify the replacement worked
+        echo "=== Verifying file replacement ==="
+        echo "Original file backup size:" && wc -l config/email-config.js.backup
+        echo "Modified file size:" && wc -l config/email-config.js
+        echo "First 5 lines of modified file:"
+        head -5 config/email-config.js
         
         echo "Updated email-config.js with configuration:"
         head -10 config/email-config.js
@@ -110,7 +120,11 @@ jobs:
       run: |
         echo "=== Final verification before deployment ==="
         echo "Config directory exists:" && ls -la config/
-        echo "Email config file:" && head -10 config/email-config.js
+        echo "Email config file (first 15 lines):" && head -15 config/email-config.js
+        echo "=== Checking for EMAIL_CONFIG in file ==="
+        grep -n "EMAIL_CONFIG" config/email-config.js || echo "EMAIL_CONFIG not found!"
+        echo "=== File size check ==="
+        wc -l config/email-config.js
         echo "All files to deploy:" && find . -type f -not -path "./.git/*" | grep -E "\.(html|css|js|png|jpg|svg|pdf|ico)$" | sort
     
     - name: Deploy to GitHub Pages
@@ -121,3 +135,12 @@ jobs:
         publish_dir: ./
         keep_files: false
         force_orphan: true
+    
+    - name: Verify deployment
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "=== Deployment completed ==="
+        echo "Waiting for GitHub Pages to update..."
+        sleep 30
+        echo "Testing deployed config file..."
+        curl -s "https://portfolio.theguywiththedogs.dev/config/email-config.js" | head -10 || echo "Could not fetch deployed file yet"
