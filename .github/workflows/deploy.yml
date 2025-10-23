@@ -29,78 +29,29 @@ jobs:
           npm install
         fi
         
-    - name: Inject EmailJS Configuration
+    - name: Inject EmailJS config
       run: |
-        echo "=== EmailJS Configuration Injection ==="
-        echo "Checking secrets availability..."
-        
-        if [ -z "$EMAILJS_SERVICE_ID" ]; then
-          echo "❌ EMAILJS_SERVICE_ID is missing"
-          exit 1
-        else
-          echo "✅ EMAILJS_SERVICE_ID is available (length: ${#EMAILJS_SERVICE_ID})"
-        fi
-        
-        if [ -z "$EMAILJS_TEMPLATE_ID" ]; then
-          echo "❌ EMAILJS_TEMPLATE_ID is missing"
-          exit 1
-        else
-          echo "✅ EMAILJS_TEMPLATE_ID is available (length: ${#EMAILJS_TEMPLATE_ID})"
-        fi
-        
-        if [ -z "$EMAILJS_PUBLIC_KEY" ]; then
-          echo "❌ EMAILJS_PUBLIC_KEY is missing"
-          exit 1
-        else
-          echo "✅ EMAILJS_PUBLIC_KEY is available (length: ${#EMAILJS_PUBLIC_KEY})"
-        fi
-        
-        echo "Creating configuration injection..."
-        
-        # Create the configuration injection using echo commands
-        echo "Creating configuration injection..."
-        
-        # Inject EmailJS configuration directly into email-config.js
-        echo "Injecting EmailJS configuration into email-config.js..."
-        
-        # Create the configuration injection using echo commands
-        echo "// EmailJS configuration - injected by GitHub Actions" > temp_config.js
-        echo "window.EMAIL_CONFIG = {" >> temp_config.js
-        echo "    EMAILJS_SERVICE_ID: '$EMAILJS_SERVICE_ID'," >> temp_config.js
-        echo "    EMAILJS_TEMPLATE_ID: '$EMAILJS_TEMPLATE_ID'," >> temp_config.js
-        echo "    EMAILJS_PUBLIC_KEY: '$EMAILJS_PUBLIC_KEY'" >> temp_config.js
-        echo "};" >> temp_config.js
-        echo "" >> temp_config.js
-        cat config/email-config.js >> temp_config.js
-        
-        # Create backup and replace
-        cp config/email-config.js config/email-config.js.backup
-        mv temp_config.js config/email-config.js
-        
-        # Verify the replacement worked
-        echo "=== Verifying file replacement ==="
-        echo "Original file backup size:" && wc -l config/email-config.js.backup
-        echo "Modified file size:" && wc -l config/email-config.js
-        echo "First 5 lines of modified file:"
-        head -5 config/email-config.js
-        
-        echo "Updated email-config.js with configuration:"
-        head -10 config/email-config.js
-        
-        # Verify configuration was injected successfully
-        if grep -q "window.EMAIL_CONFIG" config/email-config.js; then
-          echo "✅ EmailJS configuration injected into email-config.js successfully!"
-          echo "Configuration preview:"
-          head -8 config/email-config.js
-        else
-          echo "❌ Failed to inject configuration"
-          ls -la config/
-          exit 1
-        fi
-      env:
-        EMAILJS_SERVICE_ID: ${{ secrets.EMAILJS_SERVICE_ID }}
-        EMAILJS_TEMPLATE_ID: ${{ secrets.EMAILJS_TEMPLATE_ID }}
-        EMAILJS_PUBLIC_KEY: ${{ secrets.EMAILJS_PUBLIC_KEY }}
+        test -n "${{ secrets.EMAILJS_SERVICE_ID }}"  || (echo "Missing EMAILJS_SERVICE_ID" && exit 1)
+        test -n "${{ secrets.EMAILJS_TEMPLATE_ID }}" || (echo "Missing EMAILJS_TEMPLATE_ID" && exit 1)
+        test -n "${{ secrets.EMAILJS_PUBLIC_KEY }}"  || (echo "Missing EMAILJS_PUBLIC_KEY"  && exit 1)
+
+        mkdir -p config
+        {
+          echo "// EmailJS configuration - injected by GitHub Actions"
+          echo "window.EMAIL_CONFIG = {"
+          echo "  EMAILJS_SERVICE_ID:  \"${{ secrets.EMAILJS_SERVICE_ID }}\","
+          echo "  EMAILJS_TEMPLATE_ID: \"${{ secrets.EMAILJS_TEMPLATE_ID }}\","
+          echo "  EMAILJS_PUBLIC_KEY:  \"${{ secrets.EMAILJS_PUBLIC_KEY }}\""
+          echo "};"
+          echo
+          cat config/email-config.js   # append your class definition after the window var
+        } > config/email-config.js.new
+
+        mv config/email-config.js.new config/email-config.js
+
+    - name: Cache-bust config script
+      run: |
+        sed -i "s/__BUILD__/${{ github.run_number }}/g" index.html
     
     - name: List files to be deployed
       run: |
