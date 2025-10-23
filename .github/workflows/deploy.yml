@@ -127,6 +127,20 @@ jobs:
         wc -l config/email-config.js
         echo "All files to deploy:" && find . -type f -not -path "./.git/*" | grep -E "\.(html|css|js|png|jpg|svg|pdf|ico)$" | sort
     
+    - name: Commit modified config file
+      run: |
+        echo "=== Committing modified config file to repository ==="
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add config/email-config.js
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Auto-update EmailJS configuration [skip ci]"
+          git push origin main
+          echo "✅ Modified config file committed to repository"
+        fi
+    
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       if: github.ref == 'refs/heads/main'
