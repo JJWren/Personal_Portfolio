@@ -36,18 +36,30 @@ jobs:
         test -n "${{ secrets.EMAILJS_PUBLIC_KEY }}"  || (echo "Missing EMAILJS_PUBLIC_KEY"  && exit 1)
 
         mkdir -p config
-        {
-          echo "// EmailJS configuration - injected by GitHub Actions"
-          echo "window.EMAIL_CONFIG = {"
-          echo "  EMAILJS_SERVICE_ID:  \"${{ secrets.EMAILJS_SERVICE_ID }}\","
-          echo "  EMAILJS_TEMPLATE_ID: \"${{ secrets.EMAILJS_TEMPLATE_ID }}\","
-          echo "  EMAILJS_PUBLIC_KEY:  \"${{ secrets.EMAILJS_PUBLIC_KEY }}\""
-          echo "};"
-          echo
-          cat config/email-config.js   # append your class definition after the window var
-        } > config/email-config.js.new
+        
+        # Check if configuration already exists to prevent duplicates
+        if grep -q "window.EMAIL_CONFIG" config/email-config.js; then
+          echo "⚠️ EmailJS configuration already exists in email-config.js, skipping injection"
+          echo "Current configuration preview:"
+          head -10 config/email-config.js
+        else
+          echo "Injecting EmailJS configuration into email-config.js..."
+          {
+            echo "// EmailJS configuration - injected by GitHub Actions"
+            echo "window.EMAIL_CONFIG = {"
+            echo "  EMAILJS_SERVICE_ID:  \"${{ secrets.EMAILJS_SERVICE_ID }}\","
+            echo "  EMAILJS_TEMPLATE_ID: \"${{ secrets.EMAILJS_TEMPLATE_ID }}\","
+            echo "  EMAILJS_PUBLIC_KEY:  \"${{ secrets.EMAILJS_PUBLIC_KEY }}\""
+            echo "};"
+            echo
+            cat config/email-config.js   # append your class definition after the window var
+          } > config/email-config.js.new
 
-        mv config/email-config.js.new config/email-config.js
+          mv config/email-config.js.new config/email-config.js
+          echo "✅ EmailJS configuration injected successfully!"
+          echo "Configuration preview:"
+          head -10 config/email-config.js
+        fi
 
     - name: Cache-bust config script
       run: |
