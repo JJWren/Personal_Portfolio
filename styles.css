@@ -424,6 +424,15 @@ p {
     font-weight: 500;
     border: 1px solid var(--border-color);
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.skill-tag i {
+    font-size: 1rem;
+    min-width: 16px;
+    text-align: center;
 }
 
 .skill-tag:hover {
