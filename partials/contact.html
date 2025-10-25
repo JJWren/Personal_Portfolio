@@ -1,0 +1,89 @@
+<!-- Contact Section -->
+<section id="contact" class="contact">
+    <div class="container">
+        <h2 class="section-title">Get In Touch</h2>
+        <div class="contact-content">
+            <div class="contact-info">
+                <h3>Let's work together!</h3>
+                <p>I'm always interested in new opportunities and exciting projects. Whether you have a question, want to collaborate, or just want to say hi, feel free to reach out!</p>
+                
+                <div class="contact-methods">
+                    <div class="contact-method">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4>Email</h4>
+                            <p>joshua.j.mykitta@gmail.com</p>
+                        </div>
+                    </div>
+                    <div class="contact-method">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4>Phone</h4>
+                            <p>251-753-3553</p>
+                        </div>
+                    </div>
+                    <div class="contact-method">
+                        <i class="fas fa-briefcase"></i>
+                        <div>
+                            <h4>Availability</h4>
+                            <p>Open to Remote Opportunities</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/joshuamykitta/" class="social-link" target="_blank" title="LinkedIn">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="https://github.com/JJWren" class="social-link" target="_blank" title="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="mailto:joshua.j.mykitta@gmail.com" class="social-link" target="_blank" title="Email">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                    <a href="https://fairshare.theguywiththedogs.dev/" class="social-link" target="_blank" title="FairShare Demo Project">
+                        <i class="fas fa-globe"></i>
+                    </a>
+                </div>
+            </div>
+
+            <form class="contact-form" id="contact-form">
+                <!-- Honeypot field for bot protection (hidden) -->
+                <div class="form-group" style="display: none;">
+                    <label for="website">Website</label>
+                    <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required minlength="2" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" id="subject" name="subject" required minlength="5" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" rows="5" required minlength="10" maxlength="1000" placeholder="Tell me about your project or opportunity!"></textarea>
+                </div>
+                
+                <!-- Simple Math CAPTCHA -->
+                <div class="form-group">
+                    <label for="captcha">Security Check: What is <span id="math-question"></span>?</label>
+                    <input type="number" id="captcha" name="captcha" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="submit-btn">
+                    <i class="fas fa-paper-plane"></i>
+                    Send Message
+                </button>
+                
+                <div id="form-message" class="form-message"></div>
+            </form>
+        </div>
+    </div>
+</section>

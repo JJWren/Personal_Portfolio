@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""
+Simple development server that loads .env variables and injects them into the client
+Usage: python dev-server.py
+Then open http://localhost:8000
+"""
+
+import http.server
+import socketserver
+import os
+import re
+from urllib.parse import urlparse
+
+# Load .env file if it exists
+def load_env():
+    env_vars = {}
+    if os.path.exists('.env'):
+        with open('.env', 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    env_vars[key] = value
+    return env_vars
+
+class DevHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        # If requesting the email-config.js file, serve with injected configuration
+        if self.path == '/config/email-config.js':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/javascript')
+            # Add cache-busting headers for development
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
+            self.end_headers()
+            
+            # Load environment variables
+            env_vars = load_env()
+            
+            # Create config injection
+            config_injection = f"""// EmailJS configuration - injected by dev server
+window.EMAIL_CONFIG = {{
+    EMAILJS_SERVICE_ID: '{env_vars.get("EMAILJS_SERVICE_ID", "")}',
+    EMAILJS_TEMPLATE_ID: '{env_vars.get("EMAILJS_TEMPLATE_ID", "")}',
+    EMAILJS_PUBLIC_KEY: '{env_vars.get("EMAILJS_PUBLIC_KEY", "")}'
+}};
+
+"""
+            
+            # Read the original file and prepend the config
+            with open('config/email-config.js', 'r') as f:
+                original_content = f.read()
+            
+            # Combine injection + original content
+            full_content = config_injection + original_content
+            self.wfile.write(full_content.encode())
+        # If requesting index.html or root, serve normally
+        elif self.path == '/' or self.path == '/index.html':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            # Add cache-busting headers for development
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
+            self.end_headers()
+            
+            with open('index.html', 'r') as f:
+                html = f.read()
+            
+            self.wfile.write(html.encode())
+        else:
+            # Serve other files normally but add cache-busting headers for development
+            super().do_GET()
+    
+    def end_headers(self):
+        # Add cache-busting headers to all responses during development
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
+        super().end_headers()
+
+if __name__ == "__main__":
+    PORT = 8001
+    print(f"Starting development server on http://localhost:{PORT}")
+    print("Make sure you have a .env file with your EmailJS credentials")
+    
+    with socketserver.TCPServer(("", PORT), DevHandler) as httpd:
+        httpd.serve_forever()

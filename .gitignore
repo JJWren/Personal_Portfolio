@@ -1,0 +1,29 @@
+# Environment variables (contains sensitive information)
+.env
+
+# Generated configuration files (contains sensitive information)
+config/email-secrets.js
+
+# Node modules
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# IDE files
+.vscode/settings.json
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Personal Documentation
+DEPLOYMENT.md

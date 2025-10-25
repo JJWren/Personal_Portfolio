@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contact Form Debug</title>
+</head>
+<body>
+    <h1>Debug Test</h1>
+    
+    <!-- Test the math captcha generation -->
+    <div>
+        <p>Math Question: <span id="math-question"></span></p>
+        <input type="number" id="captcha" placeholder="Enter answer">
+        <button onclick="testMath()">Test Math</button>
+    </div>
+    
+    <!-- Test EmailJS configuration -->
+    <div>
+        <button onclick="testEmailConfig()">Test Email Config</button>
+        <div id="config-output"></div>
+    </div>
+
+    <script src="config/email-config.js"></script>
+    <script src="contact-form.js"></script>
+    <script>
+        // Test math captcha
+        function testMath() {
+            console.log('Testing math captcha...');
+            const handler = new ContactFormHandler();
+            handler.generateMathCaptcha();
+            console.log('Math answer should be:', handler.mathAnswer);
+        }
+
+        // Test email configuration
+        function testEmailConfig() {
+            console.log('Testing email configuration...');
+            console.log('window.EMAIL_CONFIG:', window.EMAIL_CONFIG);
+            
+            const emailConfig = new EmailConfig();
+            console.log('EmailConfig instance:', {
+                serviceId: emailConfig.serviceId,
+                templateId: emailConfig.templateId,
+                publicKey: emailConfig.publicKey,
+                isConfigured: emailConfig.isConfigured()
+            });
+            
+            document.getElementById('config-output').innerHTML = `
+                <pre>${JSON.stringify({
+                    windowConfig: window.EMAIL_CONFIG,
+                    emailConfigInstance: {
+                        serviceId: emailConfig.serviceId || 'MISSING',
+                        templateId: emailConfig.templateId || 'MISSING',
+                        publicKey: emailConfig.publicKey ? emailConfig.publicKey.substring(0, 10) + '...' : 'MISSING',
+                        isConfigured: emailConfig.isConfigured()
+                    }
+                }, null, 2)}</pre>
+            `;
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', function() {
+            console.log('=== Debug Page Loaded ===');
+            testEmailConfig();
+            testMath();
+        });
+    </script>
+</body>
+</html>

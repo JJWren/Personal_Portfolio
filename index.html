@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joshua Mykitta - Secure Software Engineer</title>
+    <meta name="description" content="Personal portfolio of Joshua Mykitta showcasing projects, skills, and professional experience">
+    
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://api.emailjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' https://api.emailjs.com; img-src 'self' data: https:; base-uri 'self'; form-action 'self' https://api.emailjs.com;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <base href="/" />
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/pixel_dog.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/pixel_dog.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/pixel_dog.png">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="#home">Joshua Mykitta</a>
+            </div>
+            <ul class="nav-menu" id="nav-menu">
+                <li class="nav-item">
+                    <a href="#home" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#about" class="nav-link" data-section="about">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#resume" class="nav-link" data-section="resume">Resume</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#projects" class="nav-link" data-section="projects">Projects</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#hobbies" class="nav-link" data-section="hobbies">Hobbies</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#contact" class="nav-link" data-section="contact">Contact</a>
+                </li>
+            </ul>
+            <div class="nav-toggle" id="mobile-menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Hi, I'm <span class="highlight">Joshua Mykitta</span>
+                </h1>
+                <p class="hero-subtitle">Secure Software Engineer</p>
+                <p class="hero-description">
+                    Software Engineer with 5+ years of professional experience designing and delivering enterprise-level applications using a variety of tools and technologies, including C#/.NET, Python, and SQL Server. 
+                    Military veteran and continuous learner passionate about secure, scalable software solutions.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#projects" class="btn btn-primary" data-section="projects">View My Work</a>
+                    <a href="#contact" class="btn btn-secondary" data-section="contact">Get In Touch</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="profile-picture">
+                    <img src="images/josh_profile_2.jpg" alt="Joshua Mykitta">
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <a href="#about" data-section="about">
+                <i class="fas fa-chevron-down"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- Dynamic Content Container -->
+    <div id="dynamic-content">
+        <!-- Sections will be loaded here dynamically -->
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2025 Joshua Mykitta. All rights reserved.</p>
+                <p>Built with plain old HTML, CSS, and JavaScript 😀</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+        // Email configuration loader with proper error handling
+        window.EMAIL_CONFIG_LOADED = false;
+        
+        function loadEmailConfig() {
+            // Try to load email-secrets.js (production)
+            const secretsScript = document.createElement('script');
+            secretsScript.src = 'config/email-secrets.js?v=62';
+            secretsScript.onload = function() {
+                console.log('✅ Production EmailJS secrets loaded');
+                window.EMAIL_CONFIG_LOADED = true;
+                // Dispatch event to notify other scripts
+                window.dispatchEvent(new Event('emailConfigLoaded'));
+            };
+            secretsScript.onerror = function() {
+                console.log('⚠️ Production secrets not available, loading development config...');
+                // Load development fallback
+                const devScript = document.createElement('script');
+                devScript.src = 'config/email-dev-config.js?v=62';
+                devScript.onload = function() {
+                    console.log('📝 Development EmailJS config loaded');
+                    window.EMAIL_CONFIG_LOADED = true;
+                    // Dispatch event to notify other scripts
+                    window.dispatchEvent(new Event('emailConfigLoaded'));
+                };
+                devScript.onerror = function() {
+                    console.warn('❌ Failed to load development config, using fallback');
+                    window.EMAIL_CONFIG_LOADED = true;
+                    // Dispatch event even if failed so other scripts can continue
+                    window.dispatchEvent(new Event('emailConfigLoaded'));
+                };
+                document.head.appendChild(devScript);
+            };
+            document.head.appendChild(secretsScript);
+        }
+        
+        // Load configuration immediately
+        loadEmailConfig();
+    </script>
+    <script src="config/email-config.js?v=62"></script>
+    <script src="config/email-manual-config.js?v=62"></script>
+    <script src="partials-loader.js"></script>
+    <script src="script.js"></script>
+    <script src="contact-form.js" defer></script>
+</body>
+</html>
