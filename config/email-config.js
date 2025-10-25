@@ -4,6 +4,11 @@
 
 class EmailConfig {
     constructor() {
+        // Singleton pattern - return existing instance if available
+        if (window.emailConfigInstance) {
+            return window.emailConfigInstance;
+        }
+        
         // For development, you can load from environment or config file
         // For production (GitHub Pages, etc), these should be set via GitHub Secrets
         // and injected during the build process
@@ -17,6 +22,9 @@ class EmailConfig {
         
         // Try immediate load first
         this.refreshConfiguration();
+        
+        // Store as singleton
+        window.emailConfigInstance = this;
     }
     
     refreshConfiguration() {
