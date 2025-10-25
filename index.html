@@ -116,6 +116,8 @@
             secretsScript.onload = function() {
                 console.log('✅ Production EmailJS secrets loaded');
                 window.EMAIL_CONFIG_LOADED = true;
+                // Dispatch event to notify other scripts
+                window.dispatchEvent(new Event('emailConfigLoaded'));
             };
             secretsScript.onerror = function() {
                 console.log('⚠️ Production secrets not available, loading development config...');
@@ -125,9 +127,14 @@
                 devScript.onload = function() {
                     console.log('📝 Development EmailJS config loaded');
                     window.EMAIL_CONFIG_LOADED = true;
+                    // Dispatch event to notify other scripts
+                    window.dispatchEvent(new Event('emailConfigLoaded'));
                 };
                 devScript.onerror = function() {
-                    console.warn('❌ Failed to load development config');
+                    console.warn('❌ Failed to load development config, using fallback');
+                    window.EMAIL_CONFIG_LOADED = true;
+                    // Dispatch event even if failed so other scripts can continue
+                    window.dispatchEvent(new Event('emailConfigLoaded'));
                 };
                 document.head.appendChild(devScript);
             };

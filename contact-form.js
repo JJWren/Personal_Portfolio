@@ -44,13 +44,9 @@ class ContactFormHandler {
             return false;
         };
         
-        // Wait for EMAIL_CONFIG to be loaded if still loading
-        const waitForConfig = () => {
-            if (window.EMAIL_CONFIG_LOADED === false) {
-                console.log('⏳ Waiting for EmailJS configuration to load...');
-                setTimeout(waitForConfig, 100);
-                return;
-            }
+        // Wait for emailConfigLoaded event
+        const initAfterConfigLoad = () => {
+            console.log('🔄 EmailJS initialization starting after config load...');
             
             // Try immediate initialization
             if (tryInit()) {
@@ -59,7 +55,7 @@ class ContactFormHandler {
             
             // If not available immediately, retry with exponential backoff
             let attempts = 0;
-            const maxAttempts = 15; // Increased attempts
+            const maxAttempts = 8; // Reduced attempts since config should be loaded
             
             const retryInit = () => {
                 attempts++;
@@ -69,8 +65,8 @@ class ContactFormHandler {
                 }
                 
                 if (attempts < maxAttempts) {
-                    const delay = Math.min(100 * Math.pow(2, attempts), 2000); // Exponential backoff, max 2s
-                    console.log(`⏳ EmailJS not ready, retrying in ${delay}ms (attempt ${attempts})`);
+                    const delay = Math.min(200 * attempts, 1000); // Linear backoff, max 1s
+                    console.log(`⏳ EmailJS config not ready, retrying in ${delay}ms (attempt ${attempts})`);
                     setTimeout(retryInit, delay);
                 } else {
                     console.warn('❌ EmailJS configuration not available after', maxAttempts, 'attempts. Email functionality disabled.');
@@ -81,8 +77,15 @@ class ContactFormHandler {
             setTimeout(retryInit, 100);
         };
         
-        // Start the configuration waiting process
-        waitForConfig();
+        // Check if config is already loaded
+        if (window.EMAIL_CONFIG_LOADED === true) {
+            console.log('📋 EmailJS config already loaded, initializing immediately...');
+            initAfterConfigLoad();
+        } else {
+            console.log('⏳ Waiting for EmailJS configuration to load...');
+            // Listen for the config loaded event
+            window.addEventListener('emailConfigLoaded', initAfterConfigLoad, { once: true });
+        }
     }
 
     generateMathCaptcha() {
