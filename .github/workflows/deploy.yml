@@ -3,43 +3,38 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
         
-    - name: Install dependencies
+    - name: Inject EmailJS configuration
       run: |
-        if [ -f package.json ]; then
-          npm install
-        fi
+        echo "🔑 Injecting EmailJS configuration..."
         
-    - name: Inject EmailJS config
-      run: |
-        test -n "${{ secrets.EMAILJS_SERVICE_ID }}"  || (echo "Missing EMAILJS_SERVICE_ID" && exit 1)
-        test -n "${{ secrets.EMAILJS_TEMPLATE_ID }}" || (echo "Missing EMAILJS_TEMPLATE_ID" && exit 1)
-        test -n "${{ secrets.EMAILJS_PUBLIC_KEY }}"  || (echo "Missing EMAILJS_PUBLIC_KEY"  && exit 1)
+        # Verify secrets exist
+        test -n "${{ secrets.EMAILJS_SERVICE_ID }}"  || (echo "❌ Missing EMAILJS_SERVICE_ID" && exit 1)
+        test -n "${{ secrets.EMAILJS_TEMPLATE_ID }}" || (echo "❌ Missing EMAILJS_TEMPLATE_ID" && exit 1)
+        test -n "${{ secrets.EMAILJS_PUBLIC_KEY }}"  || (echo "❌ Missing EMAILJS_PUBLIC_KEY"  && exit 1)
 
+        # Create EmailJS secrets file
         mkdir -p config
-        
-        echo "Creating EmailJS configuration secrets file..."
-        
-        # Create a separate secrets file that won't be committed
         cat > config/email-secrets.js << 'EOF'
         // EmailJS configuration - injected by GitHub Actions
         // This file is generated during deployment and should not be committed
@@ -50,89 +45,87 @@ jobs:
         };
         EOF
         
-        echo "✅ EmailJS configuration created successfully!"
-        echo "Configuration preview:"
-        head -10 config/email-secrets.js
+        echo "✅ EmailJS configuration created"
+        echo "📋 Preview:"
+        head -5 config/email-secrets.js
 
-    - name: Cache-bust config script
+    - name: Cache-bust scripts
       run: |
+        echo "🔄 Adding cache-busting..."
         sed -i "s/__BUILD__/${{ github.run_number }}/g" index.html
+        echo "✅ Cache-busting applied"
     
-    - name: List files to be deployed
+    - name: Prepare site for deployment
       run: |
-        echo "=== All files in repository ==="
-        find . -type f -not -path "./.git/*" | sort
-        echo "=== Config files specifically ==="
-        find . -name "*.js" -path "./config/*"
-        echo "=== Checking config directory ==="
-        ls -la config/ || echo "config directory not found"
-        echo "=== Contents of email-secrets.js ==="
-        cat config/email-secrets.js || echo "email-secrets.js not found"
-        echo "=== Contents of email-config.js (first 10 lines) ==="
-        head -10 config/email-config.js
-        echo "=== Working directory ==="
-        pwd
-        ls -la
-    
-    - name: Verify files before deployment
-      run: |
-        echo "=== Final verification before deployment ==="
-        echo "Config directory exists:" && ls -la config/
-        echo "Email config file (first 15 lines):" && head -15 config/email-config.js
-        echo "=== Checking for EMAIL_CONFIG in file ==="
-        grep -n "EMAIL_CONFIG" config/email-config.js || echo "EMAIL_CONFIG not found!"
-        echo "=== File size check ==="
-        wc -l config/email-config.js
-        echo "All files to deploy:" && find . -type f -not -path "./.git/*" | grep -E "\.(html|css|js|png|jpg|svg|pdf|ico)$" | sort
-    
-    - name: Verify configuration files
-      run: |
-        echo "=== Verifying configuration files ==="
-        echo "Original email-config.js (unchanged):" && head -5 config/email-config.js
-        echo "Generated email-secrets.js:" && head -5 config/email-secrets.js
-        echo "✅ Configuration files ready for deployment"
-    
-    - name: Prepare deployment directory
-      run: |
-        echo "=== Preparing clean deployment directory ==="
-        mkdir -p deploy
+        echo "📦 Preparing site for deployment..."
         
-        # Copy all files except .git and other build artifacts
-        rsync -av --exclude='.git' --exclude='deploy' --exclude='node_modules' . deploy/
+        # Create clean build directory
+        mkdir -p _site
         
-        # Explicitly ensure email-secrets.js is included (even though it's gitignored)
-        cp config/email-secrets.js deploy/config/email-secrets.js || echo "email-secrets.js not found"
+        # Copy all files to _site
+        rsync -av --exclude='_site' --exclude='.git' --exclude='.github' --exclude='node_modules' . _site/
         
-        echo "=== Deployment directory contents ==="
-        find deploy -name "*.js" | grep -E "(email-|config)" | sort
+        # Verify critical files exist
+        echo "🔍 Verifying build..."
         
-        echo "=== Verifying email-secrets.js in deployment ==="
-        if [ -f deploy/config/email-secrets.js ]; then
-          echo "✅ email-secrets.js is included in deployment"
-          head -3 deploy/config/email-secrets.js
-        else
-          echo "❌ email-secrets.js missing from deployment"
+        if [ ! -f "_site/index.html" ]; then
+          echo "❌ index.html missing from build"
+          exit 1
         fi
-    
-    - name: Deploy to GitHub Pages  
-      uses: peaceiris/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/main'
+        
+        if [ ! -f "_site/config/email-secrets.js" ]; then
+          echo "❌ email-secrets.js missing from build"
+          exit 1
+        fi
+        
+        if [ ! -f "_site/config/email-config.js" ]; then
+          echo "❌ email-config.js missing from build"  
+          exit 1
+        fi
+        
+        echo "✅ Build verification passed"
+        echo "📁 Site contents:"
+        find _site -name "*.js" | grep -E "(email|config)" | sort
+
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./deploy
-        keep_files: false
-        force_orphan: true
+        path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
     
     - name: Verify deployment
-      if: github.ref == 'refs/heads/main'
       run: |
-        echo "=== Deployment completed ==="
-        echo "Waiting for GitHub Pages to update..."
-        sleep 30
-        echo "Testing deployed config files..."
-        echo "=== Testing email-config.js ==="
-        curl -s "https://portfolio.theguywiththedogs.dev/config/email-config.js" | head -5 || echo "Could not fetch email-config.js yet"
-        echo "=== Testing email-secrets.js ==="
-        curl -s "https://portfolio.theguywiththedogs.dev/config/email-secrets.js" | head -5 || echo "Could not fetch email-secrets.js yet"
-        echo "=== Testing email-manual-config.js ==="
-        curl -s "https://portfolio.theguywiththedogs.dev/config/email-manual-config.js" | head -5 || echo "Could not fetch email-manual-config.js yet"
+        echo "🚀 Deployment completed!"
+        echo "🌐 Site URL: ${{ steps.deployment.outputs.page_url }}"
+        
+        # Wait a bit for deployment to propagate
+        echo "⏳ Waiting for deployment to propagate..."
+        sleep 15
+        
+        # Test key files
+        echo "🧪 Testing deployed files..."
+        
+        if curl -f -s "https://portfolio.theguywiththedogs.dev/config/email-secrets.js" > /dev/null; then
+          echo "✅ email-secrets.js is accessible"
+        else
+          echo "❌ email-secrets.js is NOT accessible"
+        fi
+        
+        if curl -f -s "https://portfolio.theguywiththedogs.dev/config/email-config.js" > /dev/null; then
+          echo "✅ email-config.js is accessible"
+        else
+          echo "❌ email-config.js is NOT accessible"
+        fi
+        
+        echo "🎉 Deployment verification complete!"
