@@ -41,31 +41,22 @@ jobs:
         TEMPLATE_ID="${{ secrets.EMAILJS_TEMPLATE_ID }}"
         PUBLIC_KEY="${{ secrets.EMAILJS_PUBLIC_KEY }}"
         
-        # Create the configuration script as a variable
-        CONFIG_SCRIPT="    <script>
-        // EmailJS configuration - injected securely during build
-        window.EMAIL_CONFIG = {
-          EMAILJS_SERVICE_ID: '${SERVICE_ID}',
-          EMAILJS_TEMPLATE_ID: '${TEMPLATE_ID}',
-          EMAILJS_PUBLIC_KEY: '${PUBLIC_KEY}'
-        };
-        console.log('EmailJS configuration loaded securely');
-        window.EMAIL_CONFIG_LOADED = true;
-        window.dispatchEvent(new Event('emailConfigLoaded'));
-    </script>"
+        # Replace placeholder in HTML with actual configuration
+        # First, create the replacement text
+        REPLACEMENT="    <script>\\
+        \/\/ EmailJS configuration - injected securely during build\\
+        window.EMAIL_CONFIG = {\\
+          EMAILJS_SERVICE_ID: '${SERVICE_ID}',\\
+          EMAILJS_TEMPLATE_ID: '${TEMPLATE_ID}',\\
+          EMAILJS_PUBLIC_KEY: '${PUBLIC_KEY}'\\
+        };\\
+        console.log('EmailJS configuration loaded securely');\\
+        window.EMAIL_CONFIG_LOADED = true;\\
+        window.dispatchEvent(new Event('emailConfigLoaded'));\\
+    <\/script>"
         
-        # Insert the configuration before </head> using awk
-        awk -v config="$CONFIG_SCRIPT" '
-        /<\/head>/ { 
-            print config
-            print $0
-            next 
-        }
-        { print }
-        ' index.html > index_with_config.html
-        
-        # Replace original file
-        mv index_with_config.html index.html
+        # Insert the configuration before </head>
+        sed -i "s|<!-- EmailJS configuration will be injected here by GitHub Actions -->|${REPLACEMENT}|" index.html
         
         echo "✅ EmailJS configuration injected securely into HTML"
         echo "🔒 No separate file created - credentials not directly accessible"
