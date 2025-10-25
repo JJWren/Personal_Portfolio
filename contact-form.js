@@ -29,41 +29,60 @@ class ContactFormHandler {
     
     initializeEmailJS() {
         const tryInit = () => {
+            // Refresh configuration to get latest values
+            this.emailConfig.refreshConfiguration();
+            
             if (this.emailConfig.isConfigured()) {
                 emailjs.init({ publicKey: this.emailConfig.publicKey });
-                console.log('EmailJS initialized successfully');
+                console.log('✅ EmailJS initialized successfully with config:', {
+                    hasServiceId: !!this.emailConfig.serviceId,
+                    hasTemplateId: !!this.emailConfig.templateId,
+                    hasPublicKey: !!this.emailConfig.publicKey
+                });
                 return true;
             }
             return false;
         };
         
-        // Try immediate initialization
-        if (tryInit()) {
-            return;
-        }
-        
-        // If not available immediately, retry with exponential backoff
-        let attempts = 0;
-        const maxAttempts = 10;
-        
-        const retryInit = () => {
-            attempts++;
-            if (tryInit()) {
-                console.log(`EmailJS initialized successfully on attempt ${attempts}`);
+        // Wait for EMAIL_CONFIG to be loaded if still loading
+        const waitForConfig = () => {
+            if (window.EMAIL_CONFIG_LOADED === false) {
+                console.log('⏳ Waiting for EmailJS configuration to load...');
+                setTimeout(waitForConfig, 100);
                 return;
             }
             
-            if (attempts < maxAttempts) {
-                const delay = Math.min(100 * Math.pow(2, attempts), 2000); // Exponential backoff, max 2s
-                console.log(`EmailJS not ready, retrying in ${delay}ms (attempt ${attempts})`);
-                setTimeout(retryInit, delay);
-            } else {
-                console.warn('EmailJS configuration not available after', maxAttempts, 'attempts. Email functionality disabled.');
+            // Try immediate initialization
+            if (tryInit()) {
+                return;
             }
+            
+            // If not available immediately, retry with exponential backoff
+            let attempts = 0;
+            const maxAttempts = 15; // Increased attempts
+            
+            const retryInit = () => {
+                attempts++;
+                if (tryInit()) {
+                    console.log(`✅ EmailJS initialized successfully on attempt ${attempts}`);
+                    return;
+                }
+                
+                if (attempts < maxAttempts) {
+                    const delay = Math.min(100 * Math.pow(2, attempts), 2000); // Exponential backoff, max 2s
+                    console.log(`⏳ EmailJS not ready, retrying in ${delay}ms (attempt ${attempts})`);
+                    setTimeout(retryInit, delay);
+                } else {
+                    console.warn('❌ EmailJS configuration not available after', maxAttempts, 'attempts. Email functionality disabled.');
+                }
+            };
+            
+            // Start retry process
+            setTimeout(retryInit, 100);
         };
         
-        // Start retry process
-        setTimeout(retryInit, 100);
+        // Start the configuration waiting process
+        waitForConfig();
     }
 
     generateMathCaptcha() {

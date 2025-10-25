@@ -19,10 +19,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="./favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="./images/pixel_dog.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="./images/pixel_dog.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="./images/pixel_dog.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/pixel_dog.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/pixel_dog.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/pixel_dog.png">
 </head>
 <body>
     <!-- Navigation -->
@@ -105,8 +105,38 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <script src="config/email-secrets.js?v=__BUILD__" onerror="console.warn('EmailJS secrets not loaded - using fallback configuration')"></script>
-    <script src="config/email-dev-config.js?v=__BUILD__"></script>
+    <script>
+        // Email configuration loader with proper error handling
+        window.EMAIL_CONFIG_LOADED = false;
+        
+        function loadEmailConfig() {
+            // Try to load email-secrets.js (production)
+            const secretsScript = document.createElement('script');
+            secretsScript.src = 'config/email-secrets.js?v=__BUILD__';
+            secretsScript.onload = function() {
+                console.log('✅ Production EmailJS secrets loaded');
+                window.EMAIL_CONFIG_LOADED = true;
+            };
+            secretsScript.onerror = function() {
+                console.log('⚠️ Production secrets not available, loading development config...');
+                // Load development fallback
+                const devScript = document.createElement('script');
+                devScript.src = 'config/email-dev-config.js?v=__BUILD__';
+                devScript.onload = function() {
+                    console.log('📝 Development EmailJS config loaded');
+                    window.EMAIL_CONFIG_LOADED = true;
+                };
+                devScript.onerror = function() {
+                    console.warn('❌ Failed to load development config');
+                };
+                document.head.appendChild(devScript);
+            };
+            document.head.appendChild(secretsScript);
+        }
+        
+        // Load configuration immediately
+        loadEmailConfig();
+    </script>
     <script src="config/email-config.js?v=__BUILD__"></script>
     <script src="partials-loader.js"></script>
     <script src="script.js"></script>
