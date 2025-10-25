@@ -92,12 +92,34 @@ jobs:
         echo "Generated email-secrets.js:" && head -5 config/email-secrets.js
         echo "✅ Configuration files ready for deployment"
     
-    - name: Deploy to GitHub Pages
+    - name: Prepare deployment directory
+      run: |
+        echo "=== Preparing clean deployment directory ==="
+        mkdir -p deploy
+        
+        # Copy all files except .git and other build artifacts
+        rsync -av --exclude='.git' --exclude='deploy' --exclude='node_modules' . deploy/
+        
+        # Explicitly ensure email-secrets.js is included (even though it's gitignored)
+        cp config/email-secrets.js deploy/config/email-secrets.js || echo "email-secrets.js not found"
+        
+        echo "=== Deployment directory contents ==="
+        find deploy -name "*.js" | grep -E "(email-|config)" | sort
+        
+        echo "=== Verifying email-secrets.js in deployment ==="
+        if [ -f deploy/config/email-secrets.js ]; then
+          echo "✅ email-secrets.js is included in deployment"
+          head -3 deploy/config/email-secrets.js
+        else
+          echo "❌ email-secrets.js missing from deployment"
+        fi
+    
+    - name: Deploy to GitHub Pages  
       uses: peaceiris/actions-gh-pages@v3
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./
+        publish_dir: ./deploy
         keep_files: false
         force_orphan: true
     
@@ -107,5 +129,10 @@ jobs:
         echo "=== Deployment completed ==="
         echo "Waiting for GitHub Pages to update..."
         sleep 30
-        echo "Testing deployed config file..."
-        curl -s "https://portfolio.theguywiththedogs.dev/config/email-config.js" | head -10 || echo "Could not fetch deployed file yet"
+        echo "Testing deployed config files..."
+        echo "=== Testing email-config.js ==="
+        curl -s "https://portfolio.theguywiththedogs.dev/config/email-config.js" | head -5 || echo "Could not fetch email-config.js yet"
+        echo "=== Testing email-secrets.js ==="
+        curl -s "https://portfolio.theguywiththedogs.dev/config/email-secrets.js" | head -5 || echo "Could not fetch email-secrets.js yet"
+        echo "=== Testing email-manual-config.js ==="
+        curl -s "https://portfolio.theguywiththedogs.dev/config/email-manual-config.js" | head -5 || echo "Could not fetch email-manual-config.js yet"
