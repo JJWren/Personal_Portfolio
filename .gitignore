@@ -1,6 +1,9 @@
 # Environment variables (contains sensitive information)
 .env
 
+# Generated configuration files (contains sensitive information)
+config/email-secrets.js
+
 # Node modules
 node_modules/
 
