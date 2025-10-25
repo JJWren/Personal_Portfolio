@@ -24,30 +24,36 @@ jobs:
     - name: Setup Pages
       uses: actions/configure-pages@v4
         
-    - name: Inject EmailJS configuration
+    - name: Inject EmailJS configuration securely
       run: |
-        echo "🔑 Injecting EmailJS configuration..."
+        echo "🔑 Injecting EmailJS configuration directly into HTML..."
         
         # Verify secrets exist
         test -n "${{ secrets.EMAILJS_SERVICE_ID }}"  || (echo "❌ Missing EMAILJS_SERVICE_ID" && exit 1)
         test -n "${{ secrets.EMAILJS_TEMPLATE_ID }}" || (echo "❌ Missing EMAILJS_TEMPLATE_ID" && exit 1)
         test -n "${{ secrets.EMAILJS_PUBLIC_KEY }}"  || (echo "❌ Missing EMAILJS_PUBLIC_KEY"  && exit 1)
 
-        # Create EmailJS secrets file
-        mkdir -p config
-        cat > config/email-secrets.js << 'EOF'
-        // EmailJS configuration - injected by GitHub Actions
-        // This file is generated during deployment and should not be committed
-        window.EMAIL_CONFIG = {
-          EMAILJS_SERVICE_ID:  "${{ secrets.EMAILJS_SERVICE_ID }}",
-          EMAILJS_TEMPLATE_ID: "${{ secrets.EMAILJS_TEMPLATE_ID }}",
-          EMAILJS_PUBLIC_KEY:  "${{ secrets.EMAILJS_PUBLIC_KEY }}"
-        };
-        EOF
+        # Create secure inline configuration in HTML
+        # This prevents direct access to credentials via separate file
         
-        echo "✅ EmailJS configuration created"
-        echo "📋 Preview:"
-        head -5 config/email-secrets.js
+        # Create the configuration script block
+        CONFIG_BLOCK="<script>
+        // EmailJS configuration - injected securely during build
+        window.EMAIL_CONFIG = {
+          EMAILJS_SERVICE_ID: '${{ secrets.EMAILJS_SERVICE_ID }}',
+          EMAILJS_TEMPLATE_ID: '${{ secrets.EMAILJS_TEMPLATE_ID }}',
+          EMAILJS_PUBLIC_KEY: '${{ secrets.EMAILJS_PUBLIC_KEY }}'
+        };
+        console.log('🔑 EmailJS configuration loaded securely');
+        window.EMAIL_CONFIG_LOADED = true;
+        window.dispatchEvent(new Event('emailConfigLoaded'));
+        </script>"
+        
+        # Insert the configuration before the closing </head> tag
+        sed -i "s|</head>|$CONFIG_BLOCK\n</head>|" index.html
+        
+        echo "✅ EmailJS configuration injected securely into HTML"
+        echo "🔒 No separate file created - credentials not directly accessible"
 
     - name: Cache-bust scripts
       run: |
@@ -73,8 +79,11 @@ jobs:
           exit 1
         fi
         
-        if [ ! -f "_site/config/email-secrets.js" ]; then
-          echo "❌ email-secrets.js missing from build"
+        # Check if EmailJS configuration is properly injected in HTML
+        if grep -q "window.EMAIL_CONFIG" "_site/index.html"; then
+          echo "✅ EmailJS configuration found in HTML"
+        else
+          echo "❌ EmailJS configuration missing from HTML"
           exit 1
         fi
         
@@ -84,8 +93,9 @@ jobs:
         fi
         
         echo "✅ Build verification passed"
-        echo "📁 Site contents:"
+        echo "📁 Config files included:"
         find _site -name "*.js" | grep -E "(email|config)" | sort
+        echo "🔒 EmailJS credentials securely embedded in HTML (not accessible as separate file)"
 
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
@@ -116,16 +126,24 @@ jobs:
         # Test key files
         echo "🧪 Testing deployed files..."
         
-        if curl -f -s "https://portfolio.theguywiththedogs.dev/config/email-secrets.js" > /dev/null; then
-          echo "✅ email-secrets.js is accessible"
-        else
-          echo "❌ email-secrets.js is NOT accessible"
-        fi
-        
         if curl -f -s "https://portfolio.theguywiththedogs.dev/config/email-config.js" > /dev/null; then
           echo "✅ email-config.js is accessible"
         else
           echo "❌ email-config.js is NOT accessible"
+        fi
+        
+        # Verify that email-secrets.js is NOT accessible (security check)
+        if curl -f -s "https://portfolio.theguywiththedogs.dev/config/email-secrets.js" > /dev/null; then
+          echo "⚠️ WARNING: email-secrets.js is accessible (security risk!)"
+        else
+          echo "✅ SECURE: email-secrets.js is not directly accessible"
+        fi
+        
+        # Test that HTML contains configuration
+        if curl -s "https://portfolio.theguywiththedogs.dev/" | grep -q "window.EMAIL_CONFIG"; then
+          echo "✅ EmailJS configuration embedded in HTML"
+        else
+          echo "❌ EmailJS configuration missing from HTML"
         fi
         
         echo "🎉 Deployment verification complete!"

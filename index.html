@@ -105,45 +105,8 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <script>
-        // Email configuration loader with proper error handling
-        window.EMAIL_CONFIG_LOADED = false;
-        
-        function loadEmailConfig() {
-            // Try to load email-secrets.js (production)
-            const secretsScript = document.createElement('script');
-            secretsScript.src = 'config/email-secrets.js?v=__BUILD__';
-            secretsScript.onload = function() {
-                console.log('✅ Production EmailJS secrets loaded');
-                window.EMAIL_CONFIG_LOADED = true;
-                // Dispatch event to notify other scripts
-                window.dispatchEvent(new Event('emailConfigLoaded'));
-            };
-            secretsScript.onerror = function() {
-                console.log('⚠️ Production secrets not available, loading development config...');
-                // Load development fallback
-                const devScript = document.createElement('script');
-                devScript.src = 'config/email-dev-config.js?v=__BUILD__';
-                devScript.onload = function() {
-                    console.log('📝 Development EmailJS config loaded');
-                    window.EMAIL_CONFIG_LOADED = true;
-                    // Dispatch event to notify other scripts
-                    window.dispatchEvent(new Event('emailConfigLoaded'));
-                };
-                devScript.onerror = function() {
-                    console.warn('❌ Failed to load development config, using fallback');
-                    window.EMAIL_CONFIG_LOADED = true;
-                    // Dispatch event even if failed so other scripts can continue
-                    window.dispatchEvent(new Event('emailConfigLoaded'));
-                };
-                document.head.appendChild(devScript);
-            };
-            document.head.appendChild(secretsScript);
-        }
-        
-        // Load configuration immediately
-        loadEmailConfig();
-    </script>
+    <!-- EmailJS configuration will be injected here by GitHub Actions -->
+    <script src="config/email-dev-config.js?v=__BUILD__"></script>
     <script src="config/email-config.js?v=__BUILD__"></script>
     <script src="config/email-manual-config.js?v=__BUILD__"></script>
     <script src="partials-loader.js"></script>
