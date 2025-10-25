@@ -706,6 +706,15 @@ p {
     font-size: 0.8rem;
     font-weight: 500;
     border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.project-tech span i {
+    font-size: 0.9rem;
+    min-width: 14px;
+    text-align: center;
 }
 
 /* Hobbies Section */
