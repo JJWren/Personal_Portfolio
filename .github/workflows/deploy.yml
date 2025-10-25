@@ -41,33 +41,25 @@ jobs:
         TEMPLATE_ID="${{ secrets.EMAILJS_TEMPLATE_ID }}"
         PUBLIC_KEY="${{ secrets.EMAILJS_PUBLIC_KEY }}"
         
-        # Replace placeholder in HTML with actual configuration
-        # Create a temporary script file to inject
-        cat > inject_config.js << 'EOF'
-    <script>
-        // EmailJS configuration - injected securely during build
-        window.EMAIL_CONFIG = {
-          EMAILJS_SERVICE_ID: 'SERVICE_PLACEHOLDER',
-          EMAILJS_TEMPLATE_ID: 'TEMPLATE_PLACEHOLDER', 
-          EMAILJS_PUBLIC_KEY: 'PUBLIC_PLACEHOLDER'
-        };
-        console.log('EmailJS configuration loaded securely');
-        window.EMAIL_CONFIG_LOADED = true;
-        window.dispatchEvent(new Event('emailConfigLoaded'));
-    </script>
-        EOF
+        # Create configuration using echo commands (avoids YAML issues)
+        echo "    <script>" > config.tmp
+        echo "        // EmailJS configuration - injected securely during build" >> config.tmp  
+        echo "        window.EMAIL_CONFIG = {" >> config.tmp
+        echo "          EMAILJS_SERVICE_ID: '${SERVICE_ID}'," >> config.tmp
+        echo "          EMAILJS_TEMPLATE_ID: '${TEMPLATE_ID}'," >> config.tmp
+        echo "          EMAILJS_PUBLIC_KEY: '${PUBLIC_KEY}'" >> config.tmp
+        echo "        };" >> config.tmp
+        echo "        console.log('EmailJS configuration loaded securely');" >> config.tmp
+        echo "        window.EMAIL_CONFIG_LOADED = true;" >> config.tmp
+        echo "        window.dispatchEvent(new Event('emailConfigLoaded'));" >> config.tmp
+        echo "    </script>" >> config.tmp
         
-        # Replace placeholders with actual values
-        sed -i "s/SERVICE_PLACEHOLDER/${SERVICE_ID}/g" inject_config.js
-        sed -i "s/TEMPLATE_PLACEHOLDER/${TEMPLATE_ID}/g" inject_config.js
-        sed -i "s/PUBLIC_PLACEHOLDER/${PUBLIC_KEY}/g" inject_config.js
-        
-        # Replace the placeholder comment in HTML with the script content
-        sed -i "/<!-- EmailJS configuration will be injected here by GitHub Actions -->/r inject_config.js" index.html
-        sed -i "/<!-- EmailJS configuration will be injected here by GitHub Actions -->/d" index.html
+        # Replace the placeholder comment in HTML
+        sed -i '/<!-- EmailJS configuration will be injected here by GitHub Actions -->/r config.tmp' index.html
+        sed -i '/<!-- EmailJS configuration will be injected here by GitHub Actions -->/d' index.html
         
         # Clean up
-        rm inject_config.js
+        rm config.tmp
         
         echo "✅ EmailJS configuration injected securely into HTML"
         echo "🔒 No separate file created - credentials not directly accessible"
