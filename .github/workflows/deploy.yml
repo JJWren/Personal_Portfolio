@@ -36,45 +36,36 @@ jobs:
         # Create secure inline configuration in HTML
         # This prevents direct access to credentials via separate file
         
-        # Create a temporary config file
-        cat > email-config-inline.js << 'EOF'
-    <script>
+        # Use a simpler approach to inject configuration
+        SERVICE_ID="${{ secrets.EMAILJS_SERVICE_ID }}"
+        TEMPLATE_ID="${{ secrets.EMAILJS_TEMPLATE_ID }}"
+        PUBLIC_KEY="${{ secrets.EMAILJS_PUBLIC_KEY }}"
+        
+        # Create the configuration script as a variable
+        CONFIG_SCRIPT="    <script>
         // EmailJS configuration - injected securely during build
         window.EMAIL_CONFIG = {
-          EMAILJS_SERVICE_ID: '${{ secrets.EMAILJS_SERVICE_ID }}',
-          EMAILJS_TEMPLATE_ID: '${{ secrets.EMAILJS_TEMPLATE_ID }}',
-          EMAILJS_PUBLIC_KEY: '${{ secrets.EMAILJS_PUBLIC_KEY }}'
+          EMAILJS_SERVICE_ID: '${SERVICE_ID}',
+          EMAILJS_TEMPLATE_ID: '${TEMPLATE_ID}',
+          EMAILJS_PUBLIC_KEY: '${PUBLIC_KEY}'
         };
-        console.log('🔑 EmailJS configuration loaded securely');
+        console.log('EmailJS configuration loaded securely');
         window.EMAIL_CONFIG_LOADED = true;
         window.dispatchEvent(new Event('emailConfigLoaded'));
-    </script>
-        EOF
+    </script>"
         
-        # Use Python to safely inject the configuration
-        python3 << 'PYTHON_EOF'
-        import re
+        # Insert the configuration before </head> using awk
+        awk -v config="$CONFIG_SCRIPT" '
+        /<\/head>/ { 
+            print config
+            print $0
+            next 
+        }
+        { print }
+        ' index.html > index_with_config.html
         
-        # Read the HTML file
-        with open('index.html', 'r') as f:
-            html_content = f.read()
-        
-        # Read the config to inject
-        with open('email-config-inline.js', 'r') as f:
-            config_content = f.read()
-        
-        # Insert before closing </head> tag
-        html_content = html_content.replace('</head>', config_content + '\n</head>')
-        
-        # Write back to file
-        with open('index.html', 'w') as f:
-            f.write(html_content)
-        
-        print("✅ EmailJS configuration injected successfully")
-        PYTHON_EOF
-        
-        # Clean up temp file
-        rm email-config-inline.js
+        # Replace original file
+        mv index_with_config.html index.html
         
         echo "✅ EmailJS configuration injected securely into HTML"
         echo "🔒 No separate file created - credentials not directly accessible"
