@@ -66,6 +66,15 @@ section {
 #dynamic-content {
     position: relative;
     z-index: 1;
+    width: 100%;
+}
+
+/* Ensure dynamically loaded sections follow document flow */
+#dynamic-content section {
+    position: relative;
+    width: 100%;
+    min-height: auto;
+    display: block;
 }
 
 /* Typography */

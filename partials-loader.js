@@ -13,13 +13,21 @@ class PartialsLoader {
 
     init() {
         // Add event listeners to navigation links
-        this.navLinks.forEach(link => {
+        document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const section = link.getAttribute('data-section');
-                this.loadSection(section);
-                this.updateActiveNav(link);
-                this.scrollToSection(section);
+                
+                // Handle Home navigation (no data-section attribute)
+                if (!section && link.getAttribute('href') === '#home') {
+                    this.showHome();
+                    this.updateActiveNav(link);
+                    this.scrollToSection('home');
+                } else if (section) {
+                    this.loadSection(section);
+                    this.updateActiveNav(link);
+                    this.scrollToSection(section);
+                }
             });
         });
 
@@ -106,7 +114,7 @@ class PartialsLoader {
     }
 
     showSection(sectionName) {
-        // Hide all sections except home
+        // Hide all dynamic sections (but keep hero/home visible)
         const allSections = this.contentContainer.querySelectorAll('section');
         allSections.forEach(section => {
             section.style.display = 'none';
@@ -125,10 +133,19 @@ class PartialsLoader {
     }
 
     hideAllSections() {
+        // Only hide dynamic sections, not the hero
         const allSections = this.contentContainer.querySelectorAll('section');
         allSections.forEach(section => {
             section.style.display = 'none';
         });
+    }
+
+    showHome() {
+        // Hide all dynamic sections to show only the hero
+        this.hideAllSections();
+        this.currentSection = 'home';
+        // Update URL hash
+        window.history.pushState(null, null, '#home');
     }
 
     updateActiveNav(activeLink) {
@@ -148,13 +165,21 @@ class PartialsLoader {
     }
 
     scrollToSection(sectionName) {
-        const targetSection = document.getElementById(sectionName);
-        if (targetSection) {
-            const offsetTop = targetSection.offsetTop - 80; // Account for fixed navbar
+        if (sectionName === 'home') {
+            // Scroll to top for home section
             window.scrollTo({
-                top: offsetTop,
+                top: 0,
                 behavior: 'smooth'
             });
+        } else {
+            const targetSection = document.getElementById(sectionName);
+            if (targetSection) {
+                const offsetTop = targetSection.offsetTop - 80; // Account for fixed navbar
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
+            }
         }
     }
 
